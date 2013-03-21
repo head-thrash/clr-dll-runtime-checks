@@ -8,10 +8,19 @@ namespace test_dll_changes
 {
 	class Program
 	{
-		static void Main(string[] args)
+		static int Main(string[] args)
 		{
-			var clazz = SomeApi.ReturnMe();
-			Console.WriteLine(clazz.DoSomeStuff("Hello from test-dll-changes (4.0)"));
+			try
+			{
+				var clazz = SomeApi.ReturnMe();
+				Console.WriteLine(clazz.DoSomeStuff("Hello from test-dll-changes (4.0)"));
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex);
+				return -1;
+			}
+			return 0;
 		}
 	}
 }

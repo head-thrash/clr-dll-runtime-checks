@@ -35,8 +35,8 @@ namespace test_suite
 			}
 			catch (AssertionException ex)
 			{
-				Console.WriteLine("FAIL {0} - {1}",
-					targetFolder, artifact, ex);
+				Console.WriteLine("FAIL {0} - {1}, {2}",
+					targetFolder, artifact, ex.InnerException);
 				return;
 			}
 			Console.WriteLine("PASS {0} - {1}", targetFolder, artifact);
@@ -45,15 +45,13 @@ namespace test_suite
 		static void DoTest(string targetFolder, string artifact)
 		{
 			Assert.That(Directory.Exists(targetFolder));
-			var libPath = @"Artifacts\" + artifact;
+			var libPath = Path.Combine("artifacts", artifact);
 			Assert.That(Directory.Exists(libPath));
 			Cleanup(targetFolder);
 			try
 			{
 				File.Copy(Path.Combine(libPath, "core-lib.dll"), 
 					Path.Combine(targetFolder, "bin", "Release", "core-lib.dll"));
-				File.Copy(Path.Combine(libPath, "core-lib.pdb"), 
-					Path.Combine(targetFolder, "bin", "Release", "core-lib.pdb"));
 
 				var spi = new ProcessStartInfo
 				{
@@ -64,11 +62,10 @@ namespace test_suite
 					FileName = Path.Combine(targetFolder, "bin", "Release", Path.GetFileName(targetFolder) + ".exe")
 				};
 				var p = Process.Start(spi);
-				var ok = p.WaitForExit(100);
-				if (!ok)
+				p.WaitForExit(100);
+				if (p.ExitCode != 0)
 				{
-					throw new AssertionException("Failed!", 
-						new Exception(p.StandardError.ReadToEnd()));
+					throw new AssertionException("Process Failed with exit code="+p.ExitCode);
 				}
 			}
 			finally
@@ -80,7 +77,6 @@ namespace test_suite
 		static void Cleanup(string targetFolder)
 		{
 			try{File.Delete(Path.Combine(targetFolder, "bin", "Release", "core-lib.dll"));}catch {}
-			try{File.Delete(Path.Combine(targetFolder, "bin", "Release", "core-lib.pdb"));}catch {}
 		}
 	}
 }
