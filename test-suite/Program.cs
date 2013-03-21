@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using NUnit.Framework;
 
@@ -42,6 +43,12 @@ namespace test_suite
 			Console.WriteLine("PASS {0} - {1}", targetFolder, artifact);
 		}
 
+		static string PathCombine(params string[] strings)
+		{
+			return Path.Combine(strings[0], 
+				strings.Length == 2 ? strings[1] : PathCombine(strings.Skip(1).ToArray()));
+		}
+
 		static void DoTest(string targetFolder, string artifact)
 		{
 			Assert.That(Directory.Exists(targetFolder));
@@ -50,8 +57,8 @@ namespace test_suite
 			Cleanup(targetFolder);
 			try
 			{
-				File.Copy(Path.Combine(libPath, "core-lib.dll"), 
-					Path.Combine(targetFolder, "bin", "Release", "core-lib.dll"));
+				File.Copy(Path.Combine(libPath, "core-lib.dll"),
+					PathCombine(targetFolder, "bin", "Release", "core-lib.dll"));
 
 				var spi = new ProcessStartInfo
 				{
@@ -59,17 +66,19 @@ namespace test_suite
 					WindowStyle = ProcessWindowStyle.Hidden,
 					RedirectStandardError = true,
 					UseShellExecute = false,
-					FileName = Path.Combine(targetFolder, "bin", "Release", Path.GetFileName(targetFolder) + ".exe")
+					FileName = PathCombine(targetFolder, "bin", "Release", Path.GetFileName(targetFolder) + ".exe")
 				};
+				
 				var p = Process.Start(spi);
-				var result = p.WaitForExit(1000);
+				const int timeout = 1000;
 				var trials = 3;
+				
+				var result = p.WaitForExit(timeout);
 				while (trials-- > 0 && !result)
-					result = p.WaitForExit(1000);
+					result = p.WaitForExit(timeout);
+				
 				if (p.ExitCode != 0)
-				{
-					throw new AssertionException("Process Failed with exit code="+p.ExitCode);
-				}
+					throw new AssertionException("Process Failed with exit code=" + p.ExitCode);
 			}
 			finally
 			{
@@ -79,7 +88,7 @@ namespace test_suite
 
 		static void Cleanup(string targetFolder)
 		{
-			try{File.Delete(Path.Combine(targetFolder, "bin", "Release", "core-lib.dll"));}catch {}
+			try { File.Delete(PathCombine(targetFolder, "bin", "Release", "core-lib.dll")); }catch { }
 		}
 	}
 }
