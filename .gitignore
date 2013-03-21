@@ -108,3 +108,5 @@ Backup*/
 UpgradeLog*.XML
 
 *.vshost.exe*
+*.mdb
+test-suite.exe*
