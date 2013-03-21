@@ -62,7 +62,10 @@ namespace test_suite
 					FileName = Path.Combine(targetFolder, "bin", "Release", Path.GetFileName(targetFolder) + ".exe")
 				};
 				var p = Process.Start(spi);
-				p.WaitForExit(100);
+				var result = p.WaitForExit(1000);
+				var trials = 3;
+				while (trials-- > 0 && !result)
+					result = p.WaitForExit(1000);
 				if (p.ExitCode != 0)
 				{
 					throw new AssertionException("Process Failed with exit code="+p.ExitCode);
